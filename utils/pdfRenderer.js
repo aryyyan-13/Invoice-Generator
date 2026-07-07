@@ -3,8 +3,8 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 import Handlebars from 'handlebars';
 
-// Path to the Sample_template.html
-const TEMPLATE_PATH = '/Users/aryan/Desktop/invoice generator/Sample_template.html';
+// Path to the Sample_template.html (resolved dynamically for portability)
+const TEMPLATE_PATH = path.join(process.cwd(), 'Sample_template.html');
 
 /**
  * Reads a local file and converts it to a Base64 data URI.
@@ -42,7 +42,7 @@ export async function generateInvoicePdf(invoiceData) {
 
   // 2. Prepare company logo as Base64 Data URI
   const logoFilename = path.basename(invoiceData.company.logoPath);
-  const absoluteLogoPath = path.join('/Users/aryan/Desktop/invoice generator/public/logos', logoFilename);
+  const absoluteLogoPath = path.join(process.cwd(), 'public/logos', logoFilename);
   const logoDataUri = getLogoDataUri(absoluteLogoPath);
 
   // 3. Inject dynamic CSS variables inside the <head> of the template
@@ -76,6 +76,7 @@ export async function generateInvoicePdf(invoiceData) {
   try {
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',

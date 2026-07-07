@@ -117,12 +117,13 @@ export default function App() {
   /* ── Page title derivation ──────────────────────── */
   const pageTitle = {
     dashboard: 'Dashboard',
-    wallet:    'Wallet',
-    clients:   'Clients',
-    invoices:  invoiceView === 'create'
-                 ? (editInvoice ? 'Regenerate Invoice' : 'New Invoice')
-                 : 'Invoice Registry',
-    settings:  'Settings',
+    wallet: 'Wallet',
+    services: 'Services',
+    clients: 'Clients',
+    invoices: invoiceView === 'create'
+      ? (editInvoice ? 'Regenerate Invoice' : 'New Invoice')
+      : 'Invoice Registry',
+    settings: 'Settings',
   }[activeSection] ?? 'Dashboard';
 
   /* ── Content renderer ───────────────────────────── */

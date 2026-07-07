@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  invoice-app:
+    build: .
+    container_name: invoice-console
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      # Persist SQLite database across container restarts
+      - ./data:/app/data
+      # Persist generated invoice PDFs
+      - ./public/invoices:/app/public/invoices
+    environment:
+      - PORT=3001
+      - DATABASE_URL=file:../data/invoice_generator.db
+      - NEXTCLOUD_URL=${NEXTCLOUD_URL}
+      - NEXTCLOUD_USERNAME=${NEXTCLOUD_USERNAME}
+      - NEXTCLOUD_APP_PASSWORD=${NEXTCLOUD_APP_PASSWORD}
