@@ -1,0 +1,18 @@
+{
+  "name": "Enterprise Invoice Console",
+  "short_name": "Invoices",
+  "description": "Self-Hosted Invoice Manager",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5ede0",
+  "theme_color": "#348F6C",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

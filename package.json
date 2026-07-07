@@ -10,6 +10,7 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build:frontend": "npm --prefix frontend run build",
+    "start:prod": "npm run build:frontend && node server.js",
     "start": "node server.js"
   },
   "keywords": [],
