@@ -1,0 +1,118 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data/invoice_generator.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique // "AVIONAUTICS" or "GMP"
+  displayName     String
+  billingAddress  String
+  gstin           String
+  logoPath        String    // e.g., "/logos/avionautics.svg"
+  themePrimary    String    // HSL or Hex
+  themeSecondary  String
+  themeAccent     String
+  accountName     String
+  accountNo       String
+  ifsc            String
+  bankName        String
+  upiId           String
+  invoicePrefix   String    // e.g., "AV" or "GMP"
+  terms           String?   @default("") // Default invoice terms (optional)
+  invoices        Invoice[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Invoice {
+  id              Int           @id @default(autoincrement())
+  companyId       Int
+  company         Company       @relation(fields: [companyId], references: [id])
+  invoiceNumber   String        @unique // e.g. "AV/26-27/0001"
+  invoiceType     String        // "PROFORMA" or "TAX"
+  invoiceDate     DateTime
+  poNumber        String?
+  buyerGstin      String
+  buyerName       String
+  buyerAddress    String
+  shipToName      String?
+  shipToAddress   String?
+  shipToGstin     String?
+  transportMode   String        // "MANUAL" or "COURIER"
+  lrNumber        String?
+  subtotal        Float         // Sum of (rate * qty)
+  discountTotal   Float         @default(0.0)
+  cgstTotal       Float         @default(0.0)
+  sgstTotal       Float         @default(0.0)
+  igstTotal       Float         @default(0.0)
+  roundAdjustment Float         @default(0.0)
+  grandTotal      Float         // Final invoice amount
+  amountInWords   String
+  pdfPath         String        // Local server fallback path
+  nextcloudPath   String        // Deterministic path in Nextcloud
+  status          String        @default("ACTIVE") // "ACTIVE", "CANCELLED"
+  items           InvoiceItem[]
+  auditLogs       AuditLog[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id            Int      @id @default(autoincrement())
+  invoiceId     Int
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  lineNo        Int
+  description   String
+  hsnCode       String
+  uom           String   // "kg", "units", "nos", or free text
+  qty           Float
+  rate          Float    // Rate excluding GST
+  amount        Float    // qty * rate
+  taxRate       Float    // Total tax percentage (e.g. 18.0)
+  cgstRate      Float    @default(0.0)
+  sgstRate      Float    @default(0.0)
+  igstRate      Float    @default(0.0)
+  cgstAmount    Float    @default(0.0)
+  sgstAmount    Float    @default(0.0)
+  igstAmount    Float    @default(0.0)
+}
+
+model InvoiceSequence {
+  id          Int      @id @default(autoincrement())
+  companyCode String
+  fiscalYear  String   // e.g. "26-27"
+  currentVal  Int      @default(0)
+
+  @@unique([companyCode, fiscalYear])
+}
+
+model HsnDirectory {
+  id          Int      @id @default(autoincrement())
+  hsnCode     String   @unique
+  taxRate     Float
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model GstValidationLog {
+  id           Int      @id @default(autoincrement())
+  gstin        String
+  isValid      Boolean
+  errorMessage String?
+  validatedAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  invoiceNumber String
+  invoiceId     Int?
+  invoice       Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  action        String   // "CREATE", "REGENERATE", "CANCEL"
+  details       String   // JSON text representing the diff / changes
+  timestamp     DateTime @default(now())
+}
