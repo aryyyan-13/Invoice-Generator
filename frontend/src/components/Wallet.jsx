@@ -65,7 +65,7 @@ function CompanyWalletCard({ company }) {
         padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 14,
       }}>
         <div style={{
-          width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.2)',
+          width: 44, height: 44, borderRadius: 8, background: 'rgba(255,255,255,0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <Building2 size={22} color="white" aria-hidden="true" />
@@ -118,7 +118,7 @@ function CompanyWalletCard({ company }) {
         {/* QR Code */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <div style={{
-            padding: 12, background: 'white', borderRadius: 12, border: '2px solid var(--border-color)',
+            padding: 12, background: 'white', borderRadius: 8, border: '2px solid var(--border-color)',
             boxShadow: 'var(--shadow-sm)',
           }}>
             <QRCodeSVG

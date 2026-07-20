@@ -24,10 +24,16 @@ model Company {
   upiId           String
   invoicePrefix   String    // e.g., "AV" or "GMP"
   terms           String?   @default("") // Default invoice terms (optional)
+  swiftBicCode    String?   // For international wire transfers
   invoices        Invoice[]
+  purchaseOrders  PurchaseOrder[]
+  quotations      Quotation[]
+  exportQuotations     ExportQuotation[]
+  commercialInvoices   CommercialInvoice[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
+
 
 model Invoice {
   id              Int           @id @default(autoincrement())
@@ -116,3 +122,355 @@ model AuditLog {
   details       String   // JSON text representing the diff / changes
   timestamp     DateTime @default(now())
 }
+
+// ── PURCHASE ORDERS ──────────────────────────────────────────
+
+model PurchaseOrder {
+  id                   Int          @id @default(autoincrement())
+  companyId            Int
+  company              Company      @relation(fields: [companyId], references: [id])
+  poNumber             String       @unique               // e.g. "AV/PO/GDS/26-27/0001"
+  poType               String                             // "GOODS" | "SERVICE"
+  poDate               DateTime
+
+  vendorName           String
+  vendorContact        String
+  vendorAddress        String
+  vendorGstin          String?
+
+  paymentAdvancePct    Float        @default(0.0)
+  paymentAdvanceAmount Float        @default(0.0)
+  paymentBalanceMode   String       @default("ON_DELIVERY") // "ON_DELIVERY" | "NET_DAYS"
+  paymentNetDays       Int?
+
+  deliveryScope        String                             // "BUYER" | "SELLER" | "THIRD_PARTY_COURIER"
+  deliveryNotes        String?
+
+  termsAndConditions   String?
+
+  subtotal             Float
+  discountTotal        Float        @default(0.0)
+  cgstTotal            Float        @default(0.0)
+  sgstTotal            Float        @default(0.0)
+  igstTotal            Float        @default(0.0)
+  pfTotal              Float        @default(0.0)          // Packing & Forwarding — GOODS only
+  roundAdjustment      Float        @default(0.0)
+  grandTotal           Float
+  amountInWords        String
+
+  pdfPath              String
+  nextcloudPath        String
+  status               String       @default("ACTIVE")    // "ACTIVE" | "CANCELLED"
+
+  items                POItem[]
+  auditLogs            POAuditLog[]
+
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+}
+
+model POItem {
+  id            Int           @id @default(autoincrement())
+  poId          Int
+  po            PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  lineNo        Int
+  description   String
+  hsnOrSacCode  String                                    // HSN for GOODS, SAC for SERVICE
+  uom           String
+  qty           Float
+  rate          Float
+  amount        Float
+  taxRate       Float
+  cgstRate      Float         @default(0.0)
+  sgstRate      Float         @default(0.0)
+  igstRate      Float         @default(0.0)
+  cgstAmount    Float         @default(0.0)
+  sgstAmount    Float         @default(0.0)
+  igstAmount    Float         @default(0.0)
+}
+
+model POSequence {
+  id          Int    @id @default(autoincrement())
+  companyCode String
+  poType      String // "GOODS" | "SERVICE"
+  fiscalYear  String
+  currentVal  Int    @default(0)
+
+  @@unique([companyCode, poType, fiscalYear])
+}
+
+model POAuditLog {
+  id        Int            @id @default(autoincrement())
+  poNumber  String
+  poId      Int?
+  po        PurchaseOrder? @relation(fields: [poId], references: [id], onDelete: SetNull)
+  action    String         // "CREATE", "REGENERATE", "CANCEL"
+  details   String
+  timestamp DateTime       @default(now())
+}
+
+// ── QUOTATIONS ───────────────────────────────────────────────
+
+model Quotation {
+  id                   Int             @id @default(autoincrement())
+  companyId            Int
+  company              Company         @relation(fields: [companyId], references: [id])
+  quotationNumber      String          @unique               // e.g. "GMP/QT/SVC/26-27/0001"
+  quotationType        String                                // "GOODS" | "SERVICE"
+  quotationDate        DateTime
+
+  clientName           String
+  clientGstin          String
+  clientAddress        String
+  clientContactNo      String
+  attentionSalutation  String                                // "Mr." | "Mrs." | "Ms."
+  attentionName        String
+
+  paymentAdvancePct    Float           @default(0.0)
+  paymentAdvanceAmount Float           @default(0.0)
+  paymentBalanceMode   String          @default("ON_DELIVERY")
+  paymentNetDays       Int?
+
+  termsAndConditions   String?
+  forceMajeureClause   String?         @default("")          // editable per-quotation boilerplate
+
+  subtotal             Float
+  discountTotal        Float           @default(0.0)
+  cgstTotal            Float           @default(0.0)         // included per design decision
+  sgstTotal            Float           @default(0.0)
+  igstTotal            Float           @default(0.0)
+  roundAdjustment      Float           @default(0.0)
+  grandTotal           Float
+  amountInWords        String
+
+  pdfPath              String
+  nextcloudPath        String
+  status               String          @default("ACTIVE")   // "ACTIVE" | "CANCELLED"
+
+  items                QuotationItem[]
+  auditLogs            QuotationAuditLog[]
+
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+}
+
+model QuotationItem {
+  id            Int       @id @default(autoincrement())
+  quotationId   Int
+  quotation     Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  lineNo        Int
+  description   String
+  uom           String
+  qty           Float
+  rate          Float
+  amount        Float
+  taxRate       Float     @default(0.0)
+  cgstRate      Float     @default(0.0)
+  sgstRate      Float     @default(0.0)
+  igstRate      Float     @default(0.0)
+  cgstAmount    Float     @default(0.0)
+  sgstAmount    Float     @default(0.0)
+  igstAmount    Float     @default(0.0)
+}
+
+model QuotationSequence {
+  id            Int    @id @default(autoincrement())
+  companyCode   String
+  quotationType String // "GOODS" | "SERVICE"
+  fiscalYear    String
+  currentVal    Int    @default(0)
+
+  @@unique([companyCode, quotationType, fiscalYear])
+}
+
+model QuotationAuditLog {
+  id              Int        @id @default(autoincrement())
+  quotationNumber String
+  quotationId     Int?
+  quotation       Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  action          String
+  details         String
+  timestamp       DateTime   @default(now())
+}
+
+// ── EXPORT QUOTATIONS (GMP only) ─────────────────────────────
+
+model ExportQuotation {
+  id                      Int                      @id @default(autoincrement())
+  companyId               Int                                              // always GMP
+  company                 Company                  @relation(fields: [companyId], references: [id])
+  quoteNumber             String                   @unique                 // e.g. GMP/EXQ/26-27/0001
+  quoteDate               DateTime
+
+  clientName              String
+  clientAddress           String
+  clientCountry           String
+
+  dispatchMethod          String                                           // SEA | AIR | COURIER | ROAD
+  shipmentType            String?
+  portOfLoading           String?
+  portOfDischarge         String?
+  incoterms               String?
+
+  paymentAdvancePct       Float                    @default(0.0)
+  paymentAdvanceAmount    Float                    @default(0.0)
+  paymentBalanceMode      String                   @default("ON_DELIVERY") // ON_DELIVERY | NET_DAYS
+  paymentNetDays          Int?
+
+  outputCurrency          String                                           // ISO 4217, e.g. USD
+  fxRate                  Float                                            // INR per 1 unit of outputCurrency (manual input, snapshotted)
+  fxRateDate              String                                           // User-specified "rate as of" date
+
+  subtotal                Float
+  discountTotal           Float                    @default(0.0)
+  roundAdjustment         Float                    @default(0.0)
+  grandTotal              Float
+  grandTotalConverted     Float                                            // grandTotal / fxRate, for display
+  amountInWords           String
+
+  additionalInfo          String?
+  forceMajeureClause      String?                  @default("")
+  includeForceMajeure     Boolean                  @default(true)
+
+  pdfPath                 String
+  nextcloudPath           String
+  status                  String                   @default("ACTIVE")     // ACTIVE | CANCELLED
+
+  items                   ExportQuotationItem[]
+  auditLogs               ExportQuotationAuditLog[]
+
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+}
+
+model ExportQuotationItem {
+  id          Int             @id @default(autoincrement())
+  quotationId Int
+  quotation   ExportQuotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  lineNo      Int
+  description String
+  uom         String
+  qty         Float
+  rate        Float
+  amount      Float           // qty * rate in INR
+}
+
+model ExportQuotationSequence {
+  id         Int    @id @default(autoincrement())
+  fiscalYear String @unique
+  currentVal Int    @default(0)
+}
+
+model ExportQuotationAuditLog {
+  id          Int              @id @default(autoincrement())
+  quoteNumber String
+  quotationId Int?
+  quotation   ExportQuotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  action      String           // CREATE | REGENERATE | CANCEL
+  details     String
+  timestamp   DateTime         @default(now())
+}
+
+// ── COMMERCIAL / PROFORMA INVOICES (GMP only) ────────────────
+
+model CommercialInvoice {
+  id                        Int                        @id @default(autoincrement())
+  companyId                 Int                                                          // always GMP
+  company                   Company                    @relation(fields: [companyId], references: [id])
+  invoiceNumber             String                     @unique                           // GMP/CI/26-27/0001 or GMP/PI/26-27/0001
+  invoiceKind               String                                                       // PROFORMA | COMMERCIAL
+  invoiceDate               DateTime
+  dueDate                   DateTime?
+
+  exporterName              String
+  exporterAddress           String
+  exporterContact           String
+
+  clientName                String
+  clientAddress             String
+
+  outputCurrency            String
+  fxRate                    Float
+  fxRateDate                String
+
+  subtotal                  Float
+  discountTotal             Float                      @default(0.0)
+  roundAdjustment           Float                      @default(0.0)
+  grandTotal                Float
+  grandTotalConverted       Float
+  amountInWords             String
+
+  incoterms                 String?
+  paymentAdvancePct         Float                      @default(0.0)
+  paymentAdvanceAmount      Float                      @default(0.0)
+  paymentBalanceMode        String                     @default("ON_DELIVERY")
+  paymentNetDays            Int?
+
+  bankAccountNumber         String
+  bankName                  String
+  bankBranchAddress         String?
+  swiftBicCode              String
+
+  purposeCode               String?
+  declaration               String                     @default("I hereby declare that the above-mentioned goods are exported as per applicable Indian export regulations, and the details given are true and correct to the best of my knowledge.")
+
+  // Optional shipping/customs fields
+  challanNumber             String?
+  challanDate               DateTime?
+  lrNumber                  String?
+  transporterName           String?
+  transportId               String?
+  vehicleNumber             String?
+  shippingBillNumber        String?
+  shippingBillDate          DateTime?
+  placeOfPreCarriage        String?
+  preCarriageBy             String?
+  portOfLoading             String?
+  countryOfOrigin           String?
+  countryOfFinalDestination String?
+  shippingPortCode          String?
+  vesselOrFlightNo          String?
+  finalDestination          String?
+
+  pdfPath                   String
+  nextcloudPath             String
+  status                    String                     @default("ACTIVE")
+
+  items                     CommercialInvoiceItem[]
+  auditLogs                 CommercialInvoiceAuditLog[]
+
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+}
+
+model CommercialInvoiceItem {
+  id        Int               @id @default(autoincrement())
+  invoiceId Int
+  invoice   CommercialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  lineNo    Int
+  description String
+  uom       String
+  qty       Float
+  rate      Float
+  amount    Float
+}
+
+model CommercialInvoiceSequence {
+  id          Int    @id @default(autoincrement())
+  invoiceKind String                                // PROFORMA | COMMERCIAL
+  fiscalYear  String
+  currentVal  Int    @default(0)
+
+  @@unique([invoiceKind, fiscalYear])
+}
+
+model CommercialInvoiceAuditLog {
+  id            Int                @id @default(autoincrement())
+  invoiceNumber String
+  invoiceId     Int?
+  invoice       CommercialInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  action        String
+  details       String
+  timestamp     DateTime           @default(now())
+}
+

@@ -1,10 +1,10 @@
 /* =====================================================
    INVOICE GENERATOR — Design System
-   Colors:  #348F6C (green primary), #E2C992 (gold),
-            #3F3D56 (navy text), #C0C0C0 (gray muted)
-   Fonts:   Outfit (headings) + Inter (body)
+   Colors:  #348F6C (brand primary), #FAFAFA (bg)
+            #09090B (text), #E4E4E7 (borders)
+   Fonts:   Geist (UI) + Geist Mono (data)
    ===================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
 
 /* ── CSS Variables ─────────────────────────────────── */
 :root {
@@ -17,47 +17,48 @@
   --color-gray:           #C0C0C0;
 
   /* Surface / Background */
-  --bg-app:               #f5ede0;   /* warm sandy background from mockup */
-  --bg-sidebar:           #348F6C;
-  --bg-main:              #ffffff;
-  --bg-surface:           #f9f9f9;
-  --bg-input:             #f3f4f6;
+  --bg-app:               #FAFAFA;   /* clean neutral background */
+  --bg-sidebar:           #18181B;   /* off-black sidebar for high contrast */
+  --bg-main:              #FFFFFF;
+  --bg-surface:           #FFFFFF;
+  --bg-input:             #F4F4F5;
 
   /* Text */
-  --text-main:            #3F3D56;
-  --text-muted:           #8d8d9c;
+  --text-main:            #09090B;
+  --text-muted:           #71717A;
   --text-sidebar:         rgba(255,255,255,0.75);
-  --text-sidebar-active:  #ffffff;
-  --text-light:           #ffffff;
+  --text-sidebar-active:  #FFFFFF;
+  --text-light:           #FFFFFF;
 
   /* Border */
-  --border-color:         #e8e8f0;
-  --border-sidebar:       rgba(255,255,255,0.15);
+  --border-color:         #E4E4E7;
+  --border-sidebar:       rgba(255,255,255,0.1);
 
   /* Status */
   --ok-color:             #348F6C;
-  --warn-color:           #f59e0b;
-  --danger-color:         #ef4444;
-  --info-color:           #3b82f6;
+  --warn-color:           #F59E0B;
+  --danger-color:         #EF4444;
+  --info-color:           #3B82F6;
 
   /* Company-overridable variables (injected by InvoiceForm) */
   --theme-primary:        #348F6C;
   --theme-secondary:      #FFFFFF;
-  --theme-accent:         #E2C992;
+  --theme-accent:         #18181B;
 
   /* Typography */
-  --font-heading:         'Outfit', sans-serif;
-  --font-body:            'Inter', sans-serif;
+  --font-heading:         'Geist', sans-serif;
+  --font-body:            'Geist', sans-serif;
+  --font-mono:            'Geist Mono', monospace;
 
   /* Layout */
-  --sidebar-width:        220px;
+  --sidebar-width:        240px;
   --header-height:        64px;
 
-  /* Elevation */
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:   0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg:   0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
-  --shadow-card: 0 20px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.07);
+  /* Elevation (reduced for dense UI) */
+  --shadow-sm:   0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  --shadow-lg:   0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+  --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.05);
 
   /* Transitions */
   --transition-fast:      all 0.15s ease;
@@ -101,6 +102,122 @@ h1, h2, h3, h4, h5, h6 {
   min-height: 100vh;
   position: relative;
 }
+
+/* ── Docs Sidebar (PO / Quotation module) ───────────── */
+.docs-sidebar {
+  width: var(--sidebar-width);
+  background: #09090B;       /* distinct from main sidebar */
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  padding: 0 0 24px 0;
+  overflow: hidden;
+}
+
+.docs-sidebar-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-align: left;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.docs-sidebar-back:hover {
+  color: rgba(255,255,255,0.9);
+}
+
+/* Module tabs row */
+.docs-sidebar-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 8px;
+}
+
+.docs-sidebar-module-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-align: left;
+  width: 100%;
+}
+
+.docs-sidebar-module-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.9);
+}
+
+.docs-sidebar-module-btn.active {
+  background: rgba(52,143,108,0.25);  /* green tint to show active module */
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Sub-view list */
+.docs-sidebar-views {
+  list-style: none;
+  padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.docs-sidebar-view-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.5);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-align: left;
+  width: 100%;
+}
+
+.docs-sidebar-view-btn:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.85);
+}
+
+.docs-sidebar-view-btn.active {
+  color: #fff;
+  font-weight: 600;
+  background: rgba(255,255,255,0.1);
+}
+
 
 /* ── Sidebar ────────────────────────────────────────── */
 .sidebar {
@@ -161,7 +278,7 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
@@ -195,7 +312,7 @@ h1, h2, h3, h4, h5, h6 {
   width: 12px;
   height: 100%;
   background: var(--bg-main);
-  border-radius: 10px 0 0 10px;
+  border-radius: 8px 0 0 10px;
 }
 
 .sidebar-icon {
@@ -208,7 +325,7 @@ h1, h2, h3, h4, h5, h6 {
 .sidebar-support {
   margin: 0 12px;
   background: rgba(0,0,0,0.15);
-  border-radius: 14px;
+  border-radius: 8px;
   padding: 16px;
   text-align: center;
 }
@@ -259,7 +376,7 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   color: rgba(255,255,255,0.6);
@@ -460,7 +577,7 @@ h1, h2, h3, h4, h5, h6 {
 .card {
   background: var(--bg-main);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 8px;
   padding: 24px;
   box-shadow: var(--shadow-sm);
   transition: var(--transition-smooth);
@@ -498,12 +615,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .btn-primary {
-  background: var(--theme-primary);
+  background-color: var(--theme-primary);
   color: var(--theme-secondary);
+  transition: var(--transition-smooth);
   box-shadow: 0 2px 8px rgba(52, 143, 108, 0.3);
 }
 
@@ -540,7 +658,7 @@ h1, h2, h3, h4, h5, h6 {
   gap: 8px;
   background: var(--bg-surface);
   padding: 5px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
 }
 
@@ -551,7 +669,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 8px 18px;
   font-size: 14px;
   font-weight: 600;
-  border-radius: 7px;
+  border-radius: 8px;
   cursor: pointer;
   transition: var(--transition-smooth);
   font-family: var(--font-body);
@@ -665,7 +783,7 @@ input::placeholder, textarea::placeholder {
   width: 100%;
   background: white;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 8px;
   max-height: 200px;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
@@ -688,7 +806,7 @@ input::placeholder, textarea::placeholder {
 /* ── Status Badges ───────────────────────────────────── */
 .badge-status {
   padding: 4px 12px;
-  border-radius: 999px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -746,7 +864,7 @@ input::placeholder, textarea::placeholder {
 
 ::-webkit-scrollbar-thumb {
   background: rgba(63, 61, 86, 0.15);
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

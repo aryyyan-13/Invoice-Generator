@@ -15,10 +15,10 @@ function ChartTooltip({ active, payload, label }) {
   return (
     <div style={{
       background: 'white', border: '1px solid var(--border-color)',
-      borderRadius: 10, padding: '10px 16px', boxShadow: 'var(--shadow-md)',
-      fontFamily: 'var(--font-body)', fontSize: 13,
+      borderRadius: 8, padding: '8px 12px', boxShadow: 'var(--shadow-md)',
+      fontFamily: 'var(--font-mono)', fontSize: 12, fontVariantNumeric: 'tabular-nums'
     }}>
-      <p style={{ color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
+      <p style={{ color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase', fontSize: 10 }}>{label}</p>
       {payload.map((entry) => (
         <p key={entry.dataKey} style={{ color: entry.color, fontWeight: 600 }}>
           {entry.name}: {fmt(entry.value)}
@@ -33,16 +33,16 @@ function MetricCard({ icon: Icon, label, value, sub, color }) {
   return (
     <div style={{
       background: 'white', border: '1px solid var(--border-color)',
-      borderRadius: 14, padding: '20px 24px',
+      borderRadius: 10, padding: '20px 24px',
       boxShadow: 'var(--shadow-sm)',
       display: 'flex', alignItems: 'flex-start', gap: 16,
       transition: 'var(--transition-smooth)',
     }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-md)'}
-      onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow-sm)'}
+      onMouseEnter={e => e.currentTarget.style.borderColor = color}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
     >
       <div style={{
-        width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+        width: 48, height: 48, borderRadius: 10, flexShrink: 0,
         background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <Icon size={22} color={color} aria-hidden="true" />
@@ -51,7 +51,7 @@ function MetricCard({ icon: Icon, label, value, sub, color }) {
         <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>
           {label}
         </p>
-        <p style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--text-main)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
+        <p style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-main)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
           {value}
         </p>
         {sub && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{sub}</p>}
@@ -177,7 +177,7 @@ export default function Dashboard() {
       {/* Revenue Chart */}
       <div style={{
         background: 'white', border: '1px solid var(--border-color)',
-        borderRadius: 14, padding: '24px', boxShadow: 'var(--shadow-sm)',
+        borderRadius: 8, padding: '24px', boxShadow: 'var(--shadow-sm)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
           <div>
@@ -236,7 +236,7 @@ export default function Dashboard() {
       {byCompany.length > 0 && (
         <div style={{
           background: 'white', border: '1px solid var(--border-color)',
-          borderRadius: 14, padding: '24px', boxShadow: 'var(--shadow-sm)',
+          borderRadius: 8, padding: '24px', boxShadow: 'var(--shadow-sm)',
         }}>
           <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700, color: 'var(--text-main)', marginBottom: 16 }}>
             Revenue by Company

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Export Quotation</title>
+  <style>
+    :root { --brand: #1a6b3c; --brand-light: #e8f5ee; --text: #1e293b; --muted: #64748b; --line: #cbd5e1; --font: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #fff; color: var(--text); font-family: var(--font); font-size: 13px; line-height: 1.5; }
+    .page { width: 210mm; min-height: 297mm; padding: 14mm; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--brand); padding-bottom: 16px; margin-bottom: 24px; }
+    .logo { max-width: 130px; max-height: 55px; object-fit: contain; }
+    .doc-title { font-size: 28px; font-weight: 800; color: var(--brand); margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .issuer { text-align: right; }
+    .issuer-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .tag { display: inline-block; background: var(--brand); color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .box { border: 1px solid var(--line); border-radius: 6px; padding: 14px; background: #f8fafc; }
+    .box-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
+    th, td { padding: 9px 11px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { background: var(--brand); color: #fff; font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: none; }
+    .num { text-align: right; }
+    .totals { width: 340px; margin-left: auto; }
+    .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+    .row.grand { border-bottom: none; border-top: 2px solid var(--text); font-weight: 700; font-size: 16px; margin-top: 4px; padding-top: 8px; color: var(--brand); }
+    .fx-note { font-size: 10px; color: var(--muted); margin-top: 6px; font-style: italic; }
+    .words { font-weight: 700; margin-top: 10px; font-size: 12px; }
+    .sign-area { margin-top: 50px; text-align: right; }
+    .sign-line { display: inline-block; border-top: 1px solid var(--text); padding-top: 6px; width: 200px; text-align: center; color: var(--muted); font-size: 12px; }
+    .terms { font-size: 11px; color: var(--muted); margin-top: 30px; border-top: 1px solid var(--line); padding-top: 14px; }
+    .terms-title { font-weight: 700; color: var(--text); margin-bottom: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <h1 class="doc-title">Export Quotation</h1>
+        <div style="font-weight:700; font-size:13px; margin-bottom:4px;">Ref: {{quoteNumber}}</div>
+        <div>Date: {{quoteDate}}</div>
+        <div style="margin-top:6px;">
+          <span class="tag">{{dispatchMethod}}</span>
+          {{#if shipmentType}}<span class="tag" style="margin-left:4px; background:#475569;">{{shipmentType}}</span>{{/if}}
+        </div>
+      </div>
+      <div class="issuer">
+        {{#if company.logo_url}}<img src="{{company.logo_url}}" class="logo" />{{/if}}
+        <div class="issuer-name">{{company.displayName}}</div>
+        {{#each company.billing_address_lines}}<div style="color:var(--muted); font-size:11px;">{{this}}</div>{{/each}}
+        <div style="margin-top:4px; font-size:11px;">GSTIN: <strong>{{company.gstin}}</strong></div>
+      </div>
+    </div>
+
+    <!-- Client & Shipment -->
+    <div class="grid-2">
+      <div class="box">
+        <div class="box-title">Quotation For</div>
+        <div style="font-weight:700; font-size:14px; margin-bottom:4px;">{{clientName}}</div>
+        <div style="white-space:pre-line; color:var(--muted);">{{clientAddress}}</div>
+        <div style="margin-top:6px;"><strong>Country:</strong> {{clientCountry}}</div>
+      </div>
+      <div class="box">
+        <div class="box-title">Shipment Details</div>
+        {{#if portOfLoading}}<div><strong>Port of Loading:</strong> {{portOfLoading}}</div>{{/if}}
+        {{#if portOfDischarge}}<div><strong>Port of Discharge:</strong> {{portOfDischarge}}</div>{{/if}}
+        {{#if incoterms}}<div><strong>Incoterms:</strong> {{incoterms}}</div>{{/if}}
+        <div style="margin-top:8px;">
+          {{#if paymentAdvancePct}}<div><strong>Advance:</strong> {{paymentAdvancePct}}% (₹{{paymentAdvanceAmount}})</div>{{/if}}
+          <div><strong>Balance:</strong> {{#if (eq paymentBalanceMode "ON_DELIVERY")}}On Delivery{{else}}Net {{paymentNetDays}} Days{{/if}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Currency -->
+    <div class="box" style="margin-bottom:20px; background:var(--brand-light); border-color:var(--brand);">
+      <div class="box-title" style="color:var(--brand);">Currency &amp; Exchange Rate</div>
+      <span style="font-weight:700;">Output Currency: {{outputCurrency}}</span>
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      <span>Rate: 1 {{outputCurrency}} = ₹{{fxRate}} (as of {{fxRateDate}})</span>
+    </div>
+
+    <!-- Line Items -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width:5%;">#</th>
+          <th style="width:47%;">Description</th>
+          <th style="width:8%;">UOM</th>
+          <th class="num" style="width:10%;">Qty</th>
+          <th class="num" style="width:15%;">Rate (₹)</th>
+          <th class="num" style="width:15%;">Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td>{{lineNo}}</td>
+          <td>{{description}}</td>
+          <td>{{uom}}</td>
+          <td class="num">{{qty}}</td>
+          <td class="num">{{rate}}</td>
+          <td class="num">{{amount}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div style="flex:1; padding-right:40px;">
+        <div class="words">Amount in Words (INR): {{amountInWords}}</div>
+        {{#if additionalInfo}}
+        <div style="margin-top:16px;"><strong>Additional Information:</strong></div>
+        <div style="white-space:pre-line; color:var(--muted); font-size:12px;">{{additionalInfo}}</div>
+        {{/if}}
+      </div>
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span>₹{{subtotal}}</span></div>
+        {{#if discountTotal}}<div class="row" style="color:#ef4444;"><span>Discount</span><span>-₹{{discountTotal}}</span></div>{{/if}}
+        <div class="row"><span>Round Off</span><span>₹{{roundAdjustment}}</span></div>
+        <div class="row grand"><span>Grand Total (INR)</span><span>₹{{grandTotal}}</span></div>
+        <div class="row" style="font-weight:600; color:var(--brand); border-bottom:none; margin-top:8px;"><span>Equiv. ({{outputCurrency}})</span><span>{{grandTotalConverted}}</span></div>
+        <div class="fx-note">* Converted at 1 {{outputCurrency}} = ₹{{fxRate}} as on {{fxRateDate}}</div>
+      </div>
+    </div>
+
+    <div class="sign-area">
+      <div style="font-weight:700; margin-bottom:40px;">For {{company.displayName}}</div>
+      <div class="sign-line">Authorised Signatory</div>
+    </div>
+
+    <div class="terms">
+      {{#if includeForceMajeure}}
+      {{#if forceMajeureClause}}
+      <div class="terms-title">Force Majeure</div>
+      <div style="white-space:pre-line; margin-bottom:16px;">{{forceMajeureClause}}</div>
+      {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</body>
+</html>

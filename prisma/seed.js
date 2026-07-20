@@ -14,7 +14,7 @@ async function main() {
 Vadodara, Gujarat – 390022 Gujarat (INDIA)
 M. No: - +91 8000218910 Email ID: - avionautics2021@gmail.com`,
       gstin: '24EVRPS3137L1ZW', // Gujarat (24)
-      logoPath: '/logos/Avionautics_logo.svg',
+      logoPath: '/logos/avionautics_round.png',
       themePrimary: '#761E1D',
       themeSecondary: '#FFFFFF',
       themeAccent: '#E2E8F0',
@@ -30,7 +30,7 @@ M. No: - +91 8000218910 Email ID: - avionautics2021@gmail.com`,
       displayName: 'GMP International',
       billingAddress: 'Block C-2, Industrial Area Phase II, Noida, Uttar Pradesh - 201305',
       gstin: '09GQUPS9619M1ZC',
-      logoPath: '/logos/GMP_logo.svg',
+      logoPath: '/logos/gmp.svg',
       themePrimary: '#000000',
       themeSecondary: '#FFFFFF',
       themeAccent: '#F3F4F6',

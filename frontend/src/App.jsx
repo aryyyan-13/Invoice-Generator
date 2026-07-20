@@ -2,9 +2,18 @@ import React, { useState, useCallback, useEffect } from 'react';
 import InvoiceList from './components/InvoiceList';
 import InvoiceForm from './components/InvoiceForm';
 import Sidebar from './components/Sidebar';
+import DocsSidebar from './components/DocsSidebar';
 import Dashboard from './components/Dashboard';
 import Wallet from './components/Wallet';
 import Clients from './components/Clients';
+import POList from './components/PurchaseOrder/POList';
+import POForm from './components/PurchaseOrder/POForm';
+import QuotationList from './components/Quotation/QuotationList';
+import QuotationForm from './components/Quotation/QuotationForm';
+import ExportQuotationList from './components/ExportQuotation/ExportQuotationList';
+import ExportQuotationForm from './components/ExportQuotation/ExportQuotationForm';
+import CommercialInvoiceList from './components/CommercialInvoice/CommercialInvoiceList';
+import CommercialInvoiceForm from './components/CommercialInvoice/CommercialInvoiceForm';
 import { Search, Bell, Menu, X, ChevronDown } from 'lucide-react';
 import './index.css';
 
@@ -53,19 +62,21 @@ function PlaceholderPage({ title, description }) {
   );
 }
 
+// ponytail: sections that use DocsSidebar instead of the main Sidebar
+const DOCS_SECTIONS = new Set(['purchase-orders', 'quotations', 'export-quotations', 'commercial-invoices']);
+
 export default function App() {
-  // Dashboard navigation state
   const [activeSection, setActiveSection] = useState('invoices');
-
-  // Invoice sub-state
-  const [invoiceView, setInvoiceView] = useState('list'); // 'list' | 'create'
+  const [invoiceView, setInvoiceView] = useState('list');
   const [editInvoice, setEditInvoice] = useState(null);
-
-  // Mobile sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Search term (header search bar)
   const [searchTerm, setSearchTerm] = useState('');
+  const [docsView, setDocsView] = useState('list');
+  // The PO or Quotation record being edited
+  const [editDoc, setEditDoc] = useState(null);
+  // Export modules simple list/form toggle
+  const [exportQView, setExportQView] = useState('list');
+  const [commercialInvView, setCommercialInvView] = useState('list');
 
   // Close sidebar on Escape key
   useEffect(() => {
@@ -107,23 +118,37 @@ export default function App() {
   /* ── Sidebar navigation handler ────────────────── */
   const handleNavigate = useCallback((section) => {
     setActiveSection(section);
-    // When navigating to invoices, always reset to list
     if (section === 'invoices') {
       setInvoiceView('list');
       setEditInvoice(null);
     }
+    // Reset docs sub-view when switching docs sections
+    if (DOCS_SECTIONS.has(section)) { setDocsView('list'); setEditDoc(null); }
+  }, []);
+
+  // Exit docs module back to the main app (defaults to invoices)
+  const handleDocsBack = useCallback(() => {
+    setActiveSection('invoices');
+    setDocsView('list');
+    setEditDoc(null);
+  }, []);
+
+  const handleDocsViewChange = useCallback((view) => {
+    if (view !== 'create') setEditDoc(null);
+    setDocsView(view);
   }, []);
 
   /* ── Page title derivation ──────────────────────── */
   const pageTitle = {
-    dashboard: 'Dashboard',
-    wallet: 'Wallet',
-    services: 'Services',
-    clients: 'Clients',
-    invoices: invoiceView === 'create'
-      ? (editInvoice ? 'Regenerate Invoice' : 'New Invoice')
-      : 'Invoice Registry',
-    settings: 'Settings',
+    dashboard:       'Dashboard',
+    wallet:          'Wallet',
+    clients:         'Clients',
+    invoices:        invoiceView === 'create' ? (editInvoice ? 'Regenerate Invoice' : 'New Invoice') : 'Invoice Registry',
+    'purchase-orders': docsView === 'create' ? 'New Purchase Order' : 'Purchase Orders',
+    quotations:      docsView === 'create' ? 'New Quotation' : 'Quotations',
+    'export-quotations': exportQView === 'create' ? 'New Export Quotation' : 'Export Quotations',
+    'commercial-invoices': commercialInvView === 'create' ? 'New Commercial Invoice' : 'Commercial Invoices',
+    settings:        'Settings',
   }[activeSection] ?? 'Dashboard';
 
   /* ── Content renderer ───────────────────────────── */
@@ -144,32 +169,96 @@ export default function App() {
             onSuccess={handleFormSuccess}
           />
         );
-      case 'dashboard':
-        return <Dashboard key="dashboard" />;
-      case 'wallet':
-        return <Wallet key="wallet" />;
-      case 'clients':
-        return <Clients key="clients" />;
-      case 'settings':
-        return (
-          <PlaceholderPage
-            title="Settings"
-            description="Application preferences and company configuration. Coming soon."
-          />
-        );
-      default:
-        return null;
+      case 'dashboard':       return <Dashboard key="dashboard" />;
+      case 'wallet':          return <Wallet key="wallet" />;
+      case 'clients':         return <Clients key="clients" />;
+      // ponytail: real list/form components — no more placeholder shells
+      case 'purchase-orders': return docsView === 'create' ? (
+        <POForm
+          key="po-form"
+          editPO={editDoc}
+          onCancel={() => { setDocsView('list'); setEditDoc(null); }}
+          onSuccess={() => { setDocsView('list'); setEditDoc(null); }}
+        />
+      ) : (
+        <POList
+          key="po-list"
+          onCreateNew={() => { setEditDoc(null); setDocsView('create'); }}
+          onEdit={(po) => { setEditDoc(po); setDocsView('create'); }}
+        />
+      );
+      case 'quotations': return docsView === 'create' ? (
+        <QuotationForm
+          key="quotation-form"
+          editQuotation={editDoc}
+          onCancel={() => { setDocsView('list'); setEditDoc(null); }}
+          onSuccess={() => { setDocsView('list'); setEditDoc(null); }}
+        />
+      ) : (
+        <QuotationList
+          key="quotation-list"
+          onCreateNew={() => { setEditDoc(null); setDocsView('create'); }}
+          onEdit={(q) => { setEditDoc(q); setDocsView('create'); }}
+        />
+      );
+      case 'export-quotations': return exportQView === 'create' ? (
+        <ExportQuotationForm
+          key="export-quotation-form"
+          editExportQuotation={editDoc}
+          onCancel={() => { setExportQView('list'); setEditDoc(null); }}
+          onSuccess={() => { setExportQView('list'); setEditDoc(null); }}
+        />
+      ) : (
+        <ExportQuotationList
+          key="export-quotation-list"
+          onNewQuote={() => { setEditDoc(null); setExportQView('create'); }}
+          onEdit={(q) => { setEditDoc(q); setExportQView('create'); }}
+        />
+      );
+      case 'commercial-invoices': return commercialInvView === 'create' ? (
+        <CommercialInvoiceForm
+          key="commercial-invoice-form"
+          editCommercialInvoice={editDoc}
+          onCancel={() => { setCommercialInvView('list'); setEditDoc(null); }}
+          onSuccess={() => { setCommercialInvView('list'); setEditDoc(null); }}
+        />
+      ) : (
+        <CommercialInvoiceList
+          key="commercial-invoice-list"
+          onNewInvoice={() => { setEditDoc(null); setCommercialInvView('create'); }}
+          onEdit={(inv) => { setEditDoc(inv); setCommercialInvView('create'); }}
+        />
+      );
+      case 'settings': return (
+        <PlaceholderPage
+          title="Settings"
+          description="Application preferences and company configuration. Coming soon."
+        />
+      );
+      default: return null;
     }
   };
 
+  const isDocsSection = DOCS_SECTIONS.has(activeSection);
+
   return (
     <div className="dashboard-layout">
-      {/* ── Sidebar ───────────────────────────────── */}
-      <Sidebar
-        activeSection={activeSection}
-        onNavigate={handleNavigate}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {/* ── Sidebar: swap for DocsSidebar inside PO / Quotation sections ── */}
+      {isDocsSection ? (
+        <DocsSidebar
+          activeSection={activeSection}
+          activeView={docsView}
+          onNavigate={handleNavigate}
+          onViewChange={handleDocsViewChange}
+          onBack={handleDocsBack}
+        />
+      ) : (
+        <Sidebar
+          activeSection={activeSection}
+          onNavigate={handleNavigate}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* ── Mobile Overlay ────────────────────────── */}
       <div
@@ -178,39 +267,38 @@ export default function App() {
         aria-hidden="true"
       />
 
-      {/* Mobile sidebar drawer (separate so it can be toggled) */}
+      {/* Mobile sidebar drawer */}
       {sidebarOpen && (
         <div
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            zIndex: 200,
-            height: '100vh',
-            width: 'var(--sidebar-width)',
+            position: 'fixed', top: 0, left: 0,
+            zIndex: 200, height: '100vh', width: 'var(--sidebar-width)',
           }}
         >
-          <Sidebar
-            activeSection={activeSection}
-            onNavigate={handleNavigate}
-            onClose={() => setSidebarOpen(false)}
-          />
+          {isDocsSection ? (
+            <DocsSidebar
+              activeSection={activeSection}
+              activeView={docsView}
+              onNavigate={handleNavigate}
+              onViewChange={setDocsView}
+              onBack={handleDocsBack}
+            />
+          ) : (
+            <Sidebar
+              activeSection={activeSection}
+              onNavigate={handleNavigate}
+              onClose={() => setSidebarOpen(false)}
+            />
+          )}
           <button
             onClick={() => setSidebarOpen(false)}
             aria-label="Close navigation"
             style={{
-              position: 'absolute',
-              top: '16px',
-              right: '-44px',
-              width: '36px',
-              height: '36px',
-              background: 'rgba(0,0,0,0.5)',
-              border: 'none',
-              borderRadius: '50%',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute', top: '16px', right: '-44px',
+              width: '36px', height: '36px',
+              background: 'rgba(0,0,0,0.5)', border: 'none',
+              borderRadius: '50%', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer',
             }}
           >

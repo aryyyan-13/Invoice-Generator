@@ -39,6 +39,7 @@ export default function InvoiceForm({ editInvoice, onCancel, onSuccess }) {
   // Financial Summary State
   const [discount, setDiscount] = useState(0);
   const [nextNumberPreview, setNextNumberPreview] = useState('Generating...');
+  const [invoiceNumberEdited, setInvoiceNumberEdited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -126,11 +127,15 @@ export default function InvoiceForm({ editInvoice, onCancel, onSuccess }) {
     fetch(`${API_BASE}/invoices/preview-next?companyCode=${code}&date=${date}`)
       .then(res => res.json())
       .then(data => {
-        setNextNumberPreview(data.nextInvoiceNumber);
+        if (!invoiceNumberEdited) {
+          setNextNumberPreview(data.nextInvoiceNumber);
+        }
       })
       .catch(err => {
         console.error("Error fetching invoice preview:", err);
-        setNextNumberPreview('Sequence error');
+        if (!invoiceNumberEdited) {
+          setNextNumberPreview('Sequence error');
+        }
       });
   };
 
@@ -281,6 +286,7 @@ export default function InvoiceForm({ editInvoice, onCancel, onSuccess }) {
       invoiceType,
       invoiceDate,
       poNumber,
+      invoiceNumberOverride: invoiceNumberEdited ? nextNumberPreview : undefined,
       buyerGstin: buyerGstin.trim().toUpperCase(),
       buyerName,
       buyerAddress,
@@ -301,7 +307,7 @@ export default function InvoiceForm({ editInvoice, onCancel, onSuccess }) {
     };
 
     const url = isEditMode
-      ? `${API_BASE}/invoices/${editInvoice.invoiceNumber}`
+      ? `${API_BASE}/invoices/${encodeURIComponent(editInvoice.invoiceNumber)}`
       : `${API_BASE}/invoices`;
 
     const method = isEditMode ? 'PUT' : 'POST';
@@ -361,6 +367,7 @@ export default function InvoiceForm({ editInvoice, onCancel, onSuccess }) {
                   opacity: isEditMode && !isSelected ? 0.5 : 1
                 }}
               >
+                {c.logoPath && <img src={`${API_BASE.replace('/api', '')}${c.logoPath}`} alt={c.code} style={{ height: '40px', objectFit: 'contain', filter: isSelected ? 'brightness(0) invert(1)' : 'none' }} />}
                 <span style={{ fontSize: '18px', fontWeight: '700' }}>{c.displayName}</span>
                 <span style={{ fontSize: '10px', opacity: 0.8 }}>GSTIN: {c.gstin}</span>
               </button>
@@ -419,12 +426,16 @@ export default function InvoiceForm({ editInvoice, onCancel, onSuccess }) {
         </div>
 
         <div className="form-group">
-          <label>Invoice Number Suffix</label>
+          <label>Invoice Number</label>
           <input
             type="text"
             value={nextNumberPreview}
-            enabled={true}
-            style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold', color: 'var(--theme-accent)' }}
+            onChange={(e) => {
+              setNextNumberPreview(e.target.value);
+              setInvoiceNumberEdited(true);
+            }}
+            disabled={isEditMode}
+            style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold', color: '#000' }}
           />
         </div>
       </div>

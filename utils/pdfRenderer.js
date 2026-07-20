@@ -37,8 +37,9 @@ function getLogoDataUri(filePath) {
  * @returns {Promise<Buffer>} PDF file Buffer
  */
 export async function generateInvoicePdf(invoiceData) {
-  // 1. Read HTML template
-  let htmlTemplate = fs.readFileSync(TEMPLATE_PATH, 'utf8');
+  // ponytail: _templatePath lets PO/Quotation routes reuse this renderer with a different template
+  const templateFile = invoiceData._templatePath ?? TEMPLATE_PATH;
+  let htmlTemplate = fs.readFileSync(templateFile, 'utf8');
 
   // 2. Prepare company logo as Base64 Data URI
   const logoFilename = path.basename(invoiceData.company.logoPath);
@@ -58,6 +59,9 @@ export async function generateInvoicePdf(invoiceData) {
   htmlTemplate = htmlTemplate.replace('</head>', `${cssOverrides}</head>`);
 
   // 4. Compile with Handlebars
+  Handlebars.registerHelper('eq', function (a, b) {
+    return a === b;
+  });
   const template = Handlebars.compile(htmlTemplate);
   
   // Map company.logo_url for template rendering

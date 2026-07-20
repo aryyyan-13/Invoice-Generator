@@ -10,7 +10,7 @@ dotenv.config();
  * @param {string} invoiceNumber - The invoice number (e.g. "AV/26-27/0001").
  * @returns {Promise<{nextcloudPath: string, fileUrl: string}>}
  */
-export async function uploadToNextcloud(pdfBuffer, companyCode, invoiceNumber) {
+export async function uploadToNextcloud(pdfBuffer, companyCode, invoiceNumber, rootFolder = 'Invoices') {
   const url = process.env.NEXTCLOUD_URL;
   const username = process.env.NEXTCLOUD_USERNAME;
   const password = process.env.NEXTCLOUD_APP_PASSWORD;
@@ -26,7 +26,7 @@ export async function uploadToNextcloud(pdfBuffer, companyCode, invoiceNumber) {
   // Sanitize the invoice number for use in filenames (replace slashes with underscores)
   const sanitizedInvoiceNum = invoiceNumber.replace(/\//g, '_');
   const remoteRoot = `/remote.php/dav/files/${username}`;
-  const invoicesDir = `${remoteRoot}/Invoices`;
+  const invoicesDir = `${remoteRoot}/${rootFolder}`;
   const companyDir = `${invoicesDir}/${companyCode}`;
   const targetFilePath = `${companyDir}/${sanitizedInvoiceNum}.pdf`;
 

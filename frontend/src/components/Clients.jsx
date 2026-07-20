@@ -18,7 +18,7 @@ function ClientCard({ client }) {
   return (
     <div style={{
       background: 'white', border: '1px solid var(--border-color)',
-      borderRadius: 14, padding: '20px 24px',
+      borderRadius: 8, padding: '20px 24px',
       boxShadow: 'var(--shadow-sm)',
       display: 'flex', flexDirection: 'column', gap: 14,
       transition: 'var(--transition-smooth)',
@@ -29,7 +29,7 @@ function ClientCard({ client }) {
       {/* Header row: avatar + name */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{
-          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+          width: 44, height: 44, borderRadius: 8, flexShrink: 0,
           background: `hsl(${hue}, 50%, 88%)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'var(--font-heading)', fontSize: 16, fontWeight: 700,

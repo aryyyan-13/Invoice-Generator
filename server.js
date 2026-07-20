@@ -12,6 +12,10 @@ import {
 } from './utils/invoiceUtils.js';
 import { generateInvoicePdf } from './utils/pdfRenderer.js';
 import { uploadToNextcloud } from './utils/nextcloudClient.js';
+import poRoutes from './routes/poRoutes.js';
+import quotationRoutes from './routes/quotationRoutes.js';
+import exportQuotationRoutes from './routes/exportQuotationRoutes.js';
+import commercialInvoiceRoutes from './routes/commercialInvoiceRoutes.js';
 
 dotenv.config();
 
@@ -25,6 +29,18 @@ app.use(express.json());
 // Serve static assets (logos and local PDF copies)
 app.use('/logos', express.static(path.join(process.cwd(), 'public/logos')));
 app.use('/public/invoices', express.static(path.join(process.cwd(), 'public/invoices')));
+app.use('/public/pos', express.static(path.join(process.cwd(), 'public/pos')));
+app.use('/public/quotations', express.static(path.join(process.cwd(), 'public/quotations')));
+
+// Mount new document module routers
+app.use('/api/po', poRoutes);
+app.use('/api/quotations', quotationRoutes);
+app.use('/api/export-quotations', exportQuotationRoutes);
+app.use('/api/commercial-invoices', commercialInvoiceRoutes);
+
+// Static file serving for new export modules
+app.use('/public/export-quotations', express.static(path.join(process.cwd(), 'public/export-quotations')));
+app.use('/public/commercial-invoices', express.static(path.join(process.cwd(), 'public/commercial-invoices')));
 
 // Ensure local invoices directory exists
 const localInvoicesDir = path.join(process.cwd(), 'public/invoices');
@@ -234,6 +250,7 @@ function calculateInvoiceTotals(companyGstin, buyerGstin, items, discountInput =
 
   return {
     processedItems,
+    isIntrastate,
     totals: {
       subtotal,
       discountTotal,
@@ -265,7 +282,8 @@ app.post('/api/invoices', async (req, res) => {
     transportMode,
     lrNumber,
     discount,
-    items
+    items,
+    invoiceNumberOverride
   } = req.body;
 
   if (!companyCode || !invoiceType || !invoiceDate || !buyerName || !buyerAddress || !items || items.length === 0) {
@@ -284,8 +302,11 @@ app.post('/api/invoices', async (req, res) => {
     // 2. Perform math calculations
     const calculations = calculateInvoiceTotals(company.gstin, buyerGstin, items, discount);
 
-    // 3. Atomically consume the invoice sequence number
-    const invoiceNumber = await getNextInvoiceNumber(company.code, invoiceDate, company.invoicePrefix, prisma);
+    // 3. Determine invoice number
+    let invoiceNumber = invoiceNumberOverride;
+    if (!invoiceNumber) {
+      invoiceNumber = await getNextInvoiceNumber(company.code, invoiceDate, company.invoicePrefix, prisma);
+    }
 
     // 4. Set local paths
     const sanitizedInvoiceNum = invoiceNumber.replace(/\//g, '_');
@@ -357,7 +378,8 @@ app.post('/api/invoices', async (req, res) => {
         amount_in_words: calculations.totals.amountInWords,
         cgst_in_words: convertNumberToWords(calculations.totals.cgstTotal),
         sgst_in_words: convertNumberToWords(calculations.totals.sgstTotal),
-        igst_in_words: convertNumberToWords(calculations.totals.igstTotal)
+        igst_in_words: convertNumberToWords(calculations.totals.igstTotal),
+        is_intrastate: calculations.isIntrastate
       }
     };
 
@@ -459,9 +481,10 @@ app.post('/api/invoices', async (req, res) => {
 // ----------------------------------------------------
 // UPDATE / REGENERATE INVOICE
 // ----------------------------------------------------
-// Route handles: PUT /api/invoices/:prefix/:fy/:seq
-app.put('/api/invoices/:prefix/:fy/:seq', async (req, res) => {
-  const invoiceNumber = `${req.params.prefix}/${req.params.fy}/${req.params.seq}`;
+// Route handles: PUT /api/invoices/:invoiceId  (invoiceId is URL-encoded, may contain slashes)
+app.put('/api/invoices/:invoiceId', async (req, res) => {
+  const invoiceNumber = decodeURIComponent(req.params.invoiceId);
+
   const {
     invoiceDate,
     poNumber,
@@ -582,7 +605,8 @@ app.put('/api/invoices/:prefix/:fy/:seq', async (req, res) => {
         amount_in_words: calculations.totals.amountInWords,
         cgst_in_words: convertNumberToWords(calculations.totals.cgstTotal),
         sgst_in_words: convertNumberToWords(calculations.totals.sgstTotal),
-        igst_in_words: convertNumberToWords(calculations.totals.igstTotal)
+        igst_in_words: convertNumberToWords(calculations.totals.igstTotal),
+        is_intrastate: calculations.isIntrastate
       }
     };
 
@@ -727,8 +751,8 @@ app.get('/api/invoices', async (req, res) => {
 });
 
 // Get invoice by number
-app.get('/api/invoices/:prefix/:fy/:seq', async (req, res) => {
-  const invoiceNumber = `${req.params.prefix}/${req.params.fy}/${req.params.seq}`;
+app.get('/api/invoices/:invoiceId', async (req, res) => {
+  const invoiceNumber = req.params.invoiceId;
   try {
     const invoice = await prisma.invoice.findUnique({
       where: { invoiceNumber },
@@ -752,8 +776,8 @@ app.get('/api/invoices/:prefix/:fy/:seq', async (req, res) => {
 });
 
 // Serve local PDF copy or regenerate on-the-fly if missing
-app.get('/api/invoices/:prefix/:fy/:seq/pdf', async (req, res) => {
-  const invoiceNumber = `${req.params.prefix}/${req.params.fy}/${req.params.seq}`;
+app.get('/api/invoices/:invoiceId/pdf', async (req, res) => {
+  const invoiceNumber = req.params.invoiceId;
   try {
     const invoice = await prisma.invoice.findUnique({
       where: { invoiceNumber },
@@ -839,7 +863,12 @@ app.get('/api/invoices/:prefix/:fy/:seq/pdf', async (req, res) => {
         amount_in_words: invoice.amountInWords,
         cgst_in_words: convertNumberToWords(invoice.cgstTotal),
         sgst_in_words: convertNumberToWords(invoice.sgstTotal),
-        igst_in_words: convertNumberToWords(invoice.igstTotal)
+        igst_in_words: convertNumberToWords(invoice.igstTotal),
+        is_intrastate: (() => {
+          const cs = invoice.company.gstin ? invoice.company.gstin.substring(0, 2) : '';
+          const bs = (invoice.buyerGstin && invoice.buyerGstin.length >= 2 && invoice.buyerGstin !== 'URD') ? invoice.buyerGstin.substring(0, 2) : cs;
+          return cs === bs;
+        })()
       }
     };
 
@@ -865,8 +894,8 @@ app.get('/api/invoices/:prefix/:fy/:seq/pdf', async (req, res) => {
 });
 
 // Cancel an invoice
-app.post('/api/invoices/:prefix/:fy/:seq/cancel', async (req, res) => {
-  const invoiceNumber = `${req.params.prefix}/${req.params.fy}/${req.params.seq}`;
+app.post('/api/invoices/:invoiceId/cancel', async (req, res) => {
+  const invoiceNumber = req.params.invoiceId;
   try {
     const existing = await prisma.invoice.findUnique({
       where: { invoiceNumber }

@@ -47,7 +47,7 @@ export default function InvoiceList({ onEdit, onCreateNew }) {
       return;
     }
 
-    fetch(`${API_BASE}/invoices/${invoiceNumber}/cancel`, {
+    fetch(`${API_BASE}/invoices/${encodeURIComponent(invoiceNumber)}/cancel`, {
       method: 'POST'
     })
       .then(res => {
@@ -74,14 +74,14 @@ export default function InvoiceList({ onEdit, onCreateNew }) {
 
   const handleOpenPdf = (invoiceNumber, e) => {
     e.stopPropagation();
-    const pdfUrl = `${API_BASE}/invoices/${invoiceNumber}/pdf`;
+    const pdfUrl = `${API_BASE}/invoices/${encodeURIComponent(invoiceNumber)}/pdf`;
     setPreviewUrl(pdfUrl);
   };
 
   const handleDownloadPdf = (invoiceNumber, e) => {
     e.stopPropagation();
     // Use the PDF API URL; the anchor's `download` attribute triggers save-to-disk
-    const pdfUrl = `${API_BASE}/invoices/${invoiceNumber}/pdf`;
+    const pdfUrl = `${API_BASE}/invoices/${encodeURIComponent(invoiceNumber)}/pdf`;
     const a = document.createElement('a');
     a.href = pdfUrl;
     a.download = `${invoiceNumber.replace(/\//g, '_')}.pdf`;
@@ -89,6 +89,20 @@ export default function InvoiceList({ onEdit, onCreateNew }) {
     a.click();
     document.body.removeChild(a);
   };
+
+  // Fetch full invoice (with items) then open the edit form
+  const handleEdit = (invoice, e) => {
+    e?.stopPropagation();
+    fetch(`${API_BASE}/invoices/${encodeURIComponent(invoice.invoiceNumber)}`)
+      .then(res => res.json())
+      .then(fullInvoice => {
+        if (fullInvoice?.invoiceNumber) onEdit(fullInvoice);
+        else alert('Could not load invoice details for editing.');
+      })
+      .catch(() => alert('Failed to load invoice for editing.'));
+  };
+
+
 
   // Format date helper
   const formatDate = (dateStr) => {
@@ -279,7 +293,7 @@ export default function InvoiceList({ onEdit, onCreateNew }) {
                               <button
                                 className="btn btn-secondary"
                                 style={{ padding: '6px 10px', fontSize: '12px' }}
-                                onClick={() => onEdit(invoice)}
+                                onClick={(e) => handleEdit(invoice, e)}
                               >
                                 Edit
                               </button>
